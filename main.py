@@ -5,21 +5,32 @@ import cgi
 import cgitb
 cgitb.enable()
 import os, sys
+from side_project import Upfile, list_of_files
+import uuid
+import json
 '''TODO 
 1. change name of uploaded file
 2. make qr code
 3. send qr to email
 4. translate qr to url and send file
 '''
-PORT_NUMBER = 8000
+PORT_NUMBER = 8080
 upload_path = os.path.join(os.curdir,'files')
 
+
+
+	
 #This class will handles any incoming request from
 #the browser 
 class myHandler(BaseHTTPRequestHandler):
 	
 	#Handler for the GET requests
 	def do_GET(self):
+		if self.path.startswith("/download"):
+			uuidfilename = self.path[9,]
+			print uuidfilename
+			return 
+			
 		if self.path=="/":
 			self.path="/index.html"
 
@@ -43,7 +54,6 @@ class myHandler(BaseHTTPRequestHandler):
 			if self.path.endswith(".css"):
 				mimetype='text/css'
 				sendReply = True
-
 			if sendReply == True:
 				#Open the static file requested and send it
 				f = open(curdir + sep + self.path) 
@@ -57,9 +67,10 @@ class myHandler(BaseHTTPRequestHandler):
 		except IOError:
 			self.send_error(404,'File Not Found: %s' % self.path)
 			
-	    
+
 	#Handler for the POST requests
 	def do_POST(self):
+		
 		if self.path=="/upload":
 			form = cgi.FieldStorage(
 			
@@ -68,31 +79,41 @@ class myHandler(BaseHTTPRequestHandler):
 				environ={'REQUEST_METHOD':'POST',
 		                 'CONTENT_TYPE':self.headers['Content-Type'],
 			})
-			if not form.has_key('upfile'):
-				print "no file form"
-				return
-		        fileitem = form["upfile"]
-		        #print fileitem
-     		        if not fileitem.file: 
-     		        	print "no fileitem"
-     		        	return
-     		        print  fileitem.filename	
-		        fout = file (os.path.join(upload_path, fileitem.filename), 'w')
-		        while 1:
-			    chunk = fileitem.file.read(100000)
-			    if not chunk: break
-			    fout.write (chunk)
-		        fout.close()
-	                print "saved in %s" % os.path.join(upload_path, fileitem.filename)
+		if not form.has_key('upfile'):
+			print "no file form"
+			return
 
-			print "Your name is: %s" % form["Email"].value
-			print "downNum is: %s" % form["downNum"].value
-			self.send_response(200)
-			self.end_headers()
+		fileitem = form["upfile"]
+		#print fileitem
+		if not fileitem.file: 
+			print "no fileitem"
+			return
+		#print  fileitem.filename
+		#give file a new name	
+		newfilename = uuid.uuid1()
+		print newfilename
+		fout = file (os.path.join(upload_path, str(newfilename)), 'w')
+		while True:
+			chunk = fileitem.file.read(100000)
+			if not chunk: break
+			fout.write(chunk)
 			
-			self.wfile.write("Thanks %s !" % form["Email"].value)
+			newfile = Upfile(form["Email"].value,newfilename, fileitem.filename,form['downNum'])
+			list_of_files.listoffiles[newfilename]=newfile
+		fout.close()
+		with open('kistoffiles.json', 'w') as f:
+			json.dump(list_of_files, f)
+		upf=list_of_files.listoffiles[newfilename]
+		print upf.file_name
+		print "saved in %s" % os.path.join(upload_path, fileitem.filename)
+		print "Your name is: %s" % form["Email"].value
+		print "downNum is: %s" % form["downNum"].value
+		
+		self.send_response(200)
+		self.end_headers()
+		self.wfile.write("Thanks %s !" % form["Email"].value)
+		
 			
-			return		
 	
 	
 			
@@ -103,7 +124,7 @@ try:
 	server = HTTPServer(('', PORT_NUMBER), myHandler)
 	print 'Started httpserver on port ' , PORT_NUMBER
 	
-	#Wait forever for incoming htto requests
+	#Wait forever for incoming http requests
 	server.serve_forever()
 
 except KeyboardInterrupt:
