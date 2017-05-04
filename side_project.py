@@ -1,6 +1,6 @@
 import os,sys
 import json
-class Upfile():
+class Upfile:
 	
 	def __init__(self, email, file_name, originame, downloads_left):
 		self.email = email
@@ -15,6 +15,8 @@ class Upfile():
 		self.link = self.servername, 'download/', self.file_name
 		return self.link
 
-class list_of_files():
+class list_of_files:
+	
 	def __init___(self):
 		self.listoffiles = {}
+

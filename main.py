@@ -3,9 +3,10 @@ from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 from os import curdir, sep
 import cgi
 import cgitb
+from fileinput import filename
 cgitb.enable()
 import os, sys
-from side_project import Upfile, list_of_files
+#from side_project import Upfile, list_of_files
 import uuid
 import json
 '''TODO 
@@ -17,9 +18,13 @@ import json
 PORT_NUMBER = 8080
 upload_path = os.path.join(os.curdir,'files')
 
+myDB = {}
 
-
-	
+def saver(email, file_name, originame, downloads_left):
+	print email, file_name, originame, downloads_left
+	new_file = [email, file_name, originame, downloads_left]
+	myDB = {file_name:new_file}
+	print myDB[file_name]
 #This class will handles any incoming request from
 #the browser 
 class myHandler(BaseHTTPRequestHandler):
@@ -30,7 +35,8 @@ class myHandler(BaseHTTPRequestHandler):
 			uuidfilename = self.path[9,]
 			print uuidfilename
 			return 
-			
+		if self.path.startswith("/user"):
+			self.path="user.html"
 		if self.path=="/":
 			self.path="/index.html"
 
@@ -70,49 +76,57 @@ class myHandler(BaseHTTPRequestHandler):
 
 	#Handler for the POST requests
 	def do_POST(self):
-		
-		if self.path=="/upload":
-			form = cgi.FieldStorage(
+		form = cgi.FieldStorage(
 			
 				fp=self.rfile, 
 				headers=self.headers,
 				environ={'REQUEST_METHOD':'POST',
 		                 'CONTENT_TYPE':self.headers['Content-Type'],
 			})
-		if not form.has_key('upfile'):
-			print "no file form"
+		if self.path=="/findUserFiles":
+			user=form["Email"].value
+			flist={k:v for k,v in myDB.iteritems() if v[0]==user}
+			print flist
+			print myDB
 			return
-
-		fileitem = form["upfile"]
-		#print fileitem
-		if not fileitem.file: 
-			print "no fileitem"
-			return
-		#print  fileitem.filename
-		#give file a new name	
-		newfilename = uuid.uuid1()
-		print newfilename
-		fout = file (os.path.join(upload_path, str(newfilename)), 'w')
-		while True:
-			chunk = fileitem.file.read(100000)
-			if not chunk: break
-			fout.write(chunk)
+		
+		if self.path=="/upload":
 			
-			newfile = Upfile(form["Email"].value,newfilename, fileitem.filename,form['downNum'])
-			list_of_files.listoffiles[newfilename]=newfile
-		fout.close()
-		with open('kistoffiles.json', 'w') as f:
-			json.dump(list_of_files, f)
-		upf=list_of_files.listoffiles[newfilename]
-		print upf.file_name
-		print "saved in %s" % os.path.join(upload_path, fileitem.filename)
-		print "Your name is: %s" % form["Email"].value
-		print "downNum is: %s" % form["downNum"].value
-		
-		self.send_response(200)
-		self.end_headers()
-		self.wfile.write("Thanks %s !" % form["Email"].value)
-		
+			if not form.has_key('upfile'):
+				print "no file form"
+				return
+	
+			fileitem = form["upfile"]
+			#print fileitem
+			if not fileitem.file: 
+				print "no fileitem"
+				return
+			#print  fileitem.filename
+			#give file a new name	
+			newfilename = uuid.uuid1()
+			print newfilename
+			fout = file (os.path.join(upload_path, str(newfilename)), 'w')
+			while True:
+				chunk = fileitem.file.read(100000)
+				if not chunk: break
+				fout.write(chunk)
+				'''clof = list_of_files()
+				newfile =  Upfile(form["Email"].value,newfilename, fileitem.filename,form['downNum'])
+				clof.listoffiles[newfilename] = newfile'''
+				saver(form["Email"].value,newfilename, fileitem.filename,form['downNum'])
+			fout.close()
+			'''with open('kistoffiles.json', 'w') as f:
+				json.dump(clof, f)
+			upf=clof.listoffiles[]
+			print upf.file_name'''
+			print "saved in %s" % os.path.join(upload_path, fileitem.filename)
+			print "Your name is: %s" % form["Email"].value
+			print "downNum is: %s" % form["downNum"].value
+			
+			self.send_response(200)
+			self.end_headers()
+			self.wfile.write("Thanks %s !" % form["Email"].value)
+			
 			
 	
 	
@@ -130,3 +144,4 @@ try:
 except KeyboardInterrupt:
 	print '^C received, shutting down the web server'
 	server.socket.close()
+
