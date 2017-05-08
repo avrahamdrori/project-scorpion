@@ -51,6 +51,9 @@ class myHandler(BaseHTTPRequestHandler):
 			if self.path.endswith(".jpg"):
 				mimetype='image/jpg'
 				sendReply = True
+			if self.path.endswith(".png"):
+				mimetype='image/png'
+				sendReply = True
 			if self.path.endswith(".gif"):
 				mimetype='image/gif'
 				sendReply = True
@@ -83,6 +86,8 @@ class myHandler(BaseHTTPRequestHandler):
 				environ={'REQUEST_METHOD':'POST',
 		                 'CONTENT_TYPE':self.headers['Content-Type'],
 			})
+		
+		
 		if self.path=="/findUserFiles":
 			user=form["Email"].value
 			flist={k:v for k,v in myDB.iteritems() if v[0]==user}
@@ -95,12 +100,12 @@ class myHandler(BaseHTTPRequestHandler):
 			if not form.has_key('upfile'):
 				print "no file form"
 				return
-	
-			fileitem = form["upfile"]
-			#print fileitem
-			if not fileitem.file: 
+			#print(form["Email"].value)
+			fileitem = form['upfile']
+			'''print fileitem
+			if not fileitem.filename:
 				print "no fileitem"
-				return
+				return'''
 			#print  fileitem.filename
 			#give file a new name	
 			newfilename = uuid.uuid1()
