@@ -1,0 +1,22 @@
+{% extends "index2.html" %}
+{% block content %}
+
+    <div class="col-sm-8 text-center"> 
+    <h2>Hello {{email}} this is the list of files you uploaded to our server</h2>
+    
+    <table class="table">
+         <tr>
+            <td>file name</td>
+            <td>times left to download<td>
+         </tr>
+         {% for row in rows%}
+         <td><img src="/uuidImages/{{row[1]}}.jpg"><a href="/download/{{row[1]}}" width="50%" height="50">{{row[0]}}</a></td>
+         <td>{{row[2]}}</td>
+         </tr>
+         {% endfor %}
+         </table>
+    </div>
+ 
+
+
+{% endblock %}

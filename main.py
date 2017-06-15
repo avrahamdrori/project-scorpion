@@ -1,6 +1,11 @@
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 from os import curdir, sep
+from jinja2 import Environment, PackageLoader, select_autoescape
+env = Environment(
+    loader=PackageLoader('main', 'templates'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
 import cgi
 import cgitb
 from fileinput import filename
@@ -19,7 +24,6 @@ PORT_NUMBER = 8080
 upload_path = os.path.join(os.curdir,'files')
 
 myDB = {}
-
 def saver(email, file_name, originame, downloads_left):
 	print email, file_name, originame, downloads_left
 	new_file = [email, file_name, originame, downloads_left]
@@ -36,7 +40,9 @@ class myHandler(BaseHTTPRequestHandler):
 			print uuidfilename
 			return 
 		if self.path.startswith("/user"):
-			self.path="user.html"
+			template = env.get_template('index2.html')
+			print template.render()
+			#self.path="user.html"
 		if self.path=="/":
 			self.path="/index.html"
 
